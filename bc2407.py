@@ -1,3 +1,5 @@
+from warnings import catch_warnings
+
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -33,17 +35,17 @@ def train_models(X_train, y_train):
     y_train_encoded = le.fit_transform(y_train)
     # y_val_encoded = le.transform(y_val2)
 
-    model = Sequential()
-    model.add(Dense(64, activation='relu', input_dim=X_train.shape[1]))
-    model.add(Dropout(0.5, seed=99))
-    model.add(Dense(1, activation='sigmoid'))
-    model.compile(optimizer=Adam(learning_rate=0.001), loss='binary_crossentropy', metrics=['accuracy'])
-    model.fit(X_train, y_train_encoded, epochs=10, batch_size=32, verbose=1)
+    # model = Sequential()
+    # model.add(Dense(64, activation='relu', input_dim=X_train.shape[1]))
+    # model.add(Dropout(0.5, seed=99))
+    # model.add(Dense(1, activation='sigmoid'))
+    # model.compile(optimizer=Adam(learning_rate=0.001), loss='binary_crossentropy', metrics=['accuracy'])
+    # model.fit(X_train, y_train_encoded, epochs=10, batch_size=32, verbose=1)
 
-    return rf, model
+    return rf # , model
 
 X_train, y_train = load_and_preprocess_data()
-rf, nn = train_models(X_train, y_train)
+rf = train_models(X_train, y_train)
 
 # Handle session state to preserve values
 if 'saved_text1' not in st.session_state:
@@ -93,17 +95,24 @@ def get_all_data(text, market_value):
     # Calculate X3 as the sum of Accumulated Depreciation and Accumulated Amortization
     depreciation_match = re.search(r'Accumulated Depreciation(?:\n|\s)*-?([\d,]+)', text, re.IGNORECASE)
     amortization_match = re.search(r'Accumulated Amortization(?:\n|\s)*-?([\d,]+)', text, re.IGNORECASE)
+    ordinary_shares_match = re.search(r'Ordinary Shares Number(?:\n|\s)*-?([\d,]+)', text, re.IGNORECASE)
 
     depreciation = abs(int(depreciation_match.group(1).replace(',', ''))) if depreciation_match else 0
     amortization = abs(int(amortization_match.group(1).replace(',', ''))) if amortization_match else 0
+    shares = int(ordinary_shares_match.group(1).replace(',', '')) if ordinary_shares_match else 0
     df['X3'] = depreciation + amortization if depreciation or amortization else None
+    if shares:
+        df['X8'] = df['X8'] * shares
     return df
 
 st.title('Bankruptcy Calculator')
-# Create an empty DataFrame
-x_data = pd.DataFrame()
+# Create an empty DataFrame to store x_data
+if 'x_data' not in st.session_state:
+    st.session_state.x_data = pd.DataFrame()
 
 # Handle session state to preserve values
+if 'saved_stock' not in st.session_state:
+    st.session_state.saved_stock = None
 if 'saved_text1' not in st.session_state:
     st.session_state.saved_text1 = None
 if 'saved_text2' not in st.session_state:
@@ -113,109 +122,125 @@ if 'saved_market_value' not in st.session_state:
 #if 'saved_year' not in st.session_state:
     #st.session_state.saved_year = 2024
 
+def calc():
+    calculate = st.button(label="Calculate Bankruptcy Probability")
+    if calculate:
+        print(st.session_state.x_data.head())
+        rf_pred = rf.predict(st.session_state.x_data)
+        rf_pred_prob = rf.predict_proba(st.session_state.x_data)
+
+        # nn_pred = nn.predict(x_data)
+
+        st.write("Random Forest Prediction: " + str(rf_pred) + str(rf_pred_prob))
+        # st.write("Neural Network Prediction: " + str(nn_pred))
+
 # Streamlit UI
 option = st.selectbox("Select input option:", ["Stock Name", "Annual Financial Statements", "Manually Enter Information"])
 if option == "Stock Name":
-    company = st.text_input(label="Enter stock name").upper()
+    input_name = st.text_input(label="Enter stock name", value=st.session_state.saved_stock)
+    st.session_state.saved_stock = input_name
+    company = input_name.upper()
     if company:
-        ticker = Ticker(company)
-        financials = ticker.income_statement()
-        position = ticker.balance_sheet()
-        income = pd.DataFrame(financials).tail(1)
-        balance = pd.DataFrame(position).tail(1)
-        price = ticker.price
-        st.write(income)
-        st.write(balance)
-        st.write(price)
-        # Define the columns and their corresponding sources
-        column_mapping = {
-            'X1': 'CurrentAssets',
-            'X2': 'CostOfRevenue',
-            'X4': 'EBITDA',
-            'X5': 'Inventory',
-            'X6': 'NetIncome',
-            'X7': 'Receivables',
-            'X9': 'TotalRevenue',
-            'X10': 'TotalAssets',
-            'X11': 'LongTermDebt',
-            'X12': 'EBIT',
-            'X13': 'GrossProfit',
-            'X14': 'CurrentLiabilities',
-            'X15': 'RetainedEarnings',
-            'X16': 'TotalRevenue',  # This seems to be a duplicate of X9
-            'X17': 'TotalLiabilitiesNetMinorityInterest',
-            'X18': 'OperatingExpense'
-        }
+        try:
+            ticker = Ticker(company)
+            financials = ticker.income_statement()
+            position = ticker.balance_sheet()
+            income = pd.DataFrame(financials).tail(1)
+            balance = pd.DataFrame(position).tail(1)
+            price = ticker.price
+            st.write(income)
+            st.write(balance)
+            st.write(price)
+            df = pd.DataFrame()
+            # Define the columns and their corresponding sources
+            column_mapping = {
+                'X1': 'CurrentAssets',
+                'X2': 'CostOfRevenue',
+                'X4': 'EBITDA',
+                'X5': 'Inventory',
+                'X6': 'NetIncome',
+                'X7': 'Receivables',
+                'X9': 'TotalRevenue',
+                'X10': 'TotalAssets',
+                'X11': 'LongTermDebt',
+                'X12': 'EBIT',
+                'X13': 'GrossProfit',
+                'X14': 'CurrentLiabilities',
+                'X15': 'RetainedEarnings',
+                'X16': 'TotalRevenue',  # This seems to be a duplicate of X9
+                'X17': 'TotalLiabilitiesNetMinorityInterest',
+                'X18': 'OperatingExpense'
+            }
 
-        # Assign values to the new DataFrame, checking if the column exists
-        for col, source in column_mapping.items():
-            if source in balance.columns or source in income.columns or source in price:
-                # Handle sources from different DataFrames or objects (balance, income, price)
-                if source in balance.columns:
-                    x_data[col] = balance[source]
-                elif source in income.columns:
-                    x_data[col] = income[source]
+            # Assign values to the new DataFrame, checking if the column exists
+            for col, source in column_mapping.items():
+                if source in balance.columns or source in income.columns or source in price:
+                    # Handle sources from different DataFrames or objects (balance, income, price)
+                    if source in balance.columns:
+                        df[col] = balance[source]
+                    elif source in income.columns:
+                        df[col] = income[source]
+                else:
+                    df[col] = np.nan  # If column is missing, assign NaN
+
+            if "AccumulatedDepreciation" in balance.columns and "AccumulatedAmortization" in balance.columns:
+                df["X3"] = abs(balance["AccumulatedDepreciation"] + balance["AccumulatedAmortization"])
+            elif "AccumulatedDepreciation" in balance.columns:
+                df["X3"] = abs(balance["AccumulatedDepreciation"])
+            elif "AccumulatedAmortization" in balance.columns:
+                df["X3"] = abs(balance["AccumulatedAmortization"])
             else:
-                x_data[col] = np.nan  # If column is missing, assign NaN
-
-        if "AccumulatedDepreciation" in balance.columns and "AccumulatedAmortization" in balance.columns:
-            x_data["X3"] = abs(balance["AccumulatedDepreciation"] + balance["AccumulatedAmortization"])
-        elif "AccumulatedDepreciation" in balance.columns:
-            x_data["X3"] = abs(balance["AccumulatedDepreciation"])
-        elif "AccumulatedAmortization" in balance.columns:
-            x_data["X3"] = abs(balance["AccumulatedAmortization"])
-        else:
-            x_data['X3'] = np.nan
-        x_data['X8'] = price.get(company, {}).get("regularMarketPrice", np.nan)  # Default to NaN if key is missing in price
-        # x_data['year'] = balance["asOfDate"].dt.year
-        cols = list(x_data.columns)[:-2]
-        # order = ["year"] + cols[0:2] + ['X3'] + cols[2:6] + ['X8'] + cols[6:]
-        order = cols[0:2] + ['X3'] + cols[2:6] + ['X8'] + cols[6:]
-        x_data = x_data[order]
-        st.write(x_data)
+                df['X3'] = np.nan
+            df['X8'] = price.get(company, {}).get("regularMarketPrice", np.nan) * balance["OrdinarySharesNumber"] # Default to NaN if key is missing in price
+            # x_data['year'] = balance["asOfDate"].dt.year
+            cols = list(df.columns)[:-2]
+            # order = ["year"] + cols[0:2] + ['X3'] + cols[2:6] + ['X8'] + cols[6:]
+            order = cols[0:2] + ['X3'] + cols[2:6] + ['X8'] + cols[6:]
+            st.session_state.x_data = df[order]
+            # Always display the extracted data if available
+            if st.session_state.x_data is not None:
+                st.write(st.session_state.x_data)
+            calc()
+        except ValueError:
+            st.write("Error! Stock not found!")
 
 elif option == "Annual Financial Statements":
+    try:
+        # Textbox for income statement input
+        text_input1 = st.text_area(label="Paste the income statement here:", value=st.session_state.saved_text1)
 
-    # Textbox for income statement input
-    text_input1 = st.text_area(label="Paste the income statement here:", value=st.session_state.saved_text1)
-    st.session_state.saved_text1 = text_input1
+        # Textbox for balance sheet input
+        text_input2 = st.text_area(label="Paste the balance sheet here:", value=st.session_state.saved_text2)
 
-    # Textbox for balance sheet input
-    text_input2 = st.text_area(label="Paste the balance sheet here:", value=st.session_state.saved_text2)
-    st.session_state.saved_text2 = text_input2
+        # Textbox for market_value input
+        market_value = st.number_input(label="Enter market value of stock:", value=st.session_state.saved_market_value)
 
-    # Textbox for market_value input
-    market_value = st.number_input(label="Enter market value of stock:", value=st.session_state.saved_market_value)
-    st.session_state.saved_market_value = market_value
+        # Textbox for year_input
+        # year = st.number_input(label="Enter year of financial statements:", value=st.session_state.saved_year)
+        # st.session_state.saved_year = year
 
-    # Textbox for year_input
-    # year = st.number_input(label="Enter year of financial statements:", value=st.session_state.saved_year)
-    # st.session_state.saved_year = year
+        clicked = st.button("Extract relevant financial data")
 
-    clicked = st.button("Extract relevant financial data")
-
-    if clicked and text_input1.strip() and text_input2.strip() :
-        # Extract and display the financial metrics for the latest year
-        text_input = text_input1 + text_input2
-        x_data = get_all_data(text_input, market_value)
-        # x_data['year'] = year
-        cols = list(x_data.columns)[:-1]
-        # order = ["year"] + cols[0:2] + ['X3'] + cols[2:]
-        order = cols[0:2] + ['X3'] + cols[2:]
-        x_data = x_data[order]
-        st.write(x_data)
+        if clicked and text_input1.strip() and text_input2.strip() :
+            st.session_state.saved_text1 = text_input1
+            st.session_state.saved_text2 = text_input2
+            st.session_state.saved_market_value = market_value
+            # Extract and display the financial metrics for the latest year
+            text_input = text_input1 + text_input2
+            df = get_all_data(text_input, market_value)
+            # df['year'] = year
+            cols = list(df.columns)[:-1]
+            # order = ["year"] + cols[0:2] + ['X3'] + cols[2:]
+            order = cols[0:2] + ['X3'] + cols[2:]
+            df = df[order]
+            st.session_state.x_data = df
+        # Always display the extracted data if available
+        if st.session_state.x_data is not None:
+            st.write(st.session_state.x_data)
+        calc()
+    except ValueError:
+        st.write("Error! Please try again!")
 
         # Option to download the DataFrame as CSV
         # csv = x_data.to_csv(index=False)
         # st.download_button(label="Download CSV", data=csv, file_name='financial_metrics_latest_year.csv', mime='text/csv')
-
-calculate = st.button(label="Calculate Bankruptcy Probability")
-if calculate:
-
-    rf_pred = rf.predict(x_data)
-    rf_pred_prob = rf.predict_proba(x_data)
-
-    nn_pred = nn.predict(x_data)
-
-    st.write("Random Forest Prediction: " + str(rf_pred) + str(rf_pred_prob))
-    st.write("Neural Network Prediction: " + str(nn_pred))
