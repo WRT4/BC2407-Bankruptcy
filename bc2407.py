@@ -4,6 +4,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import re
+import gdown
 
 from sklearn.base import BaseEstimator, ClassifierMixin
 from yahooquery import Ticker
@@ -60,6 +61,12 @@ class RandomForestWithThreshold(BaseEstimator, ClassifierMixin):
 # Cache data loading and preprocessing
 @st.cache_resource
 def load_models():
+    # Construct the download URLs
+    url_rf4 = f"https://drive.google.com/file/d/1aOJZZojkBHPKdVDr-sAHOtSfQ-2UUtly/view?usp=drive_link"
+    url_voting_clf2 = f"https://drive.google.com/file/d/1sWNi8FrnSI0w3f4MYwvhsCz_h1mpRGvY/view?usp=drive_link"
+    # Download the models
+    gdown.download(url_rf4, "rf4.pkl", quiet=False)
+    gdown.download(url_voting_clf2, "voting_clf2.pkl", quiet=False)
     rf4 = joblib.load('rf4.pkl')
     nn = load_model('smote_nn1.keras')
     voting_clf2 = joblib.load('voting_clf2.pkl')
