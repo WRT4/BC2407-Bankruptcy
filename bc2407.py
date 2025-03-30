@@ -19,6 +19,15 @@ import joblib
 # from sklearn.model_selection import train_test_split
 from sklearn.ensemble import VotingClassifier
 
+# Function to interpret model results
+def resultstring(arr):
+    if arr[0] == 1:
+        return "High Risk"
+    elif arr[0] == 0:
+        return "Low Risk"
+    else:
+        return "Error"
+
 # Custom wrapper to use the neural network with sklearn's VotingClassifier
 class KerasClassifier(BaseEstimator, ClassifierMixin):
     def __init__(self, model, threshold=0.5):
@@ -188,9 +197,9 @@ def calc():
         nn_threshold = 0.48695409297943115
         nn_pred = (nn_prob >= nn_threshold).astype(int)
 
-        st.write("Random Forest Prediction: " + str(rf_pred))
-        st.write("Neural Network Prediction: " + str(nn_pred))
-        st.write("Combined Prediction: " + str(y_pred))
+        st.write("Random Forest Prediction: " + resultstring(rf_pred))
+        st.write("Neural Network Prediction: " + resultstring(nn_pred))
+        st.write("Combined Prediction: " + resultstring(y_pred))
 
 
 # Streamlit UI
