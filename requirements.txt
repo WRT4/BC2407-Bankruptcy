@@ -2,7 +2,7 @@ numpy
 pandas
 streamlit
 scikit-learn
-tensorflow==2.16.4
+tensorflow==2.16.2
 yahooquery
 gdown
 joblib
