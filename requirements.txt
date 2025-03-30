@@ -5,3 +5,5 @@ scikit-learn
 tensorflow
 yahooquery
 gdown
+joblib
+keras
