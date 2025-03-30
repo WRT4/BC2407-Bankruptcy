@@ -61,20 +61,24 @@ class RandomForestWithThreshold(BaseEstimator, ClassifierMixin):
 # Cache data loading and preprocessing
 @st.cache_resource
 def load_models():
-    # Construct the download URLs
-    url_rf4 = "https://drive.google.com/uc?id=1aOJZZojkBHPKdVDr-sAHOtSfQ-2UUtly"  # Converted to direct link
-    url_voting_clf2 = "https://drive.google.com/uc?id=1sWNi8FrnSI0w3f4MYwvhsCz_h1mpRGvY"  # Converted to direct link
+    # Construct the download URLs (Ensure these URLs are correct)
+    url_rf4 = "https://drive.google.com/uc?id=1aOJZZojkBHPKdVDr-sAHOtSfQ-2UUtly"  # Corrected direct link
+    url_voting_clf2 = "https://drive.google.com/uc?id=1sWNi8FrnSI0w3f4MYwvhsCz_h1mpRGvY"  # Corrected direct link
     
-    # Download the models
-    gdown.download(url_rf4, "rf4.pkl", quiet=False)
-    gdown.download(url_voting_clf2, "voting_clf2.pkl", quiet=False)
-    
-    # Load the models after downloading
-    rf4 = joblib.load('rf4.pkl')
-    nn = load_model('smote_nn1.keras')
-    voting_clf2 = joblib.load('voting_clf2.pkl')
-    
-    return rf4, nn, voting_clf2
+    try:
+        # Download the models
+        gdown.download(url_rf4, "rf4.pkl", quiet=False)
+        gdown.download(url_voting_clf2, "voting_clf2.pkl", quiet=False)
+        
+        # Load the models after downloading
+        rf4 = joblib.load('rf4.pkl')
+        nn = load_model('smote_nn1.keras')
+        voting_clf2 = joblib.load('voting_clf2.pkl')
+        
+        return rf4, nn, voting_clf2
+    except Exception as e:
+        st.error(f"An error occurred while downloading the models: {e}")
+        return None, None, None
 
 
 rf4,nn,voting_clf2 = load_models()
