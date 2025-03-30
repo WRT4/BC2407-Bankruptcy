@@ -203,9 +203,9 @@ def calc():
 
 
 # Streamlit UI
-option = st.selectbox("Select input option:", ["Stock Name", "Annual Financial Statements", "Manually Enter Information"])
-if option == "Stock Name":
-    input_name = st.text_input(label="Enter stock name", value=st.session_state.saved_stock)
+option = st.selectbox("Select input option:", ["Stock Symbol", "Annual Financial Statements", "Manually Enter Information"])
+if option == "Stock Symbol":
+    input_name = st.text_input(label="Enter Stock Symbol", value=st.session_state.saved_stock)
     st.session_state.saved_stock = input_name
     company = None
     if input_name:
