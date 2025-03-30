@@ -62,15 +62,19 @@ class RandomForestWithThreshold(BaseEstimator, ClassifierMixin):
 @st.cache_resource
 def load_models():
     # Construct the download URLs
-    url_rf4 = f"https://drive.google.com/file/d/1aOJZZojkBHPKdVDr-sAHOtSfQ-2UUtly/view?usp=drive_link"
-    url_voting_clf2 = f"https://drive.google.com/file/d/1sWNi8FrnSI0w3f4MYwvhsCz_h1mpRGvY/view?usp=drive_link"
+    url_rf4 = "https://drive.google.com/uc?id=1aOJZZojkBHPKdVDr-sAHOtSfQ-2UUtly"  # Converted to direct link
+    url_voting_clf2 = "https://drive.google.com/uc?id=1sWNi8FrnSI0w3f4MYwvhsCz_h1mpRGvY"  # Converted to direct link
+    
     # Download the models
     gdown.download(url_rf4, "rf4.pkl", quiet=False)
     gdown.download(url_voting_clf2, "voting_clf2.pkl", quiet=False)
+    
+    # Load the models after downloading
     rf4 = joblib.load('rf4.pkl')
     nn = load_model('smote_nn1.keras')
     voting_clf2 = joblib.load('voting_clf2.pkl')
-    return rf4,nn,voting_clf2
+    
+    return rf4, nn, voting_clf2
 
 
 rf4,nn,voting_clf2 = load_models()
