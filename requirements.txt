@@ -6,4 +6,3 @@ tensorflow==2.16.2
 yahooquery
 gdown
 joblib
-re
