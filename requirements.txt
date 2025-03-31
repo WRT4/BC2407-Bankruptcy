@@ -5,5 +5,5 @@ scikit-learn==1.2.2
 tensorflow
 yahooquery
 gdown
-joblib==1.4.2
+joblib==0.9
 dill
