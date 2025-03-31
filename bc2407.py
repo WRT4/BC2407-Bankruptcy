@@ -7,6 +7,7 @@ import re
 import gdown
 import os
 import requests
+import pickle
 
 from sklearn.base import BaseEstimator, ClassifierMixin
 from yahooquery import Ticker
@@ -110,9 +111,12 @@ def load_models():
     download_models()
     # Load the models after downloading
     nn = load_model('models/smote_nn1.keras')
-    rf4 = joblib.load('models/rf4.pkl')
-    voting_clf2 = joblib.load('models/voting_clf2.pkl')
-    
+    #rf4 = joblib.load('models/rf4.pkl')
+    with open('models/rf4.pkl', 'rb') as f:
+        rf4 = pickle.load(f)
+    #voting_clf2 = joblib.load('models/voting_clf2.pkl')
+    with open('models/voting_clf2.pkl', 'rb') as f:
+        voting_clf2 = pickle.load(f)
     return rf4, nn, voting_clf2
     
 
