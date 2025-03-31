@@ -1,9 +1,0 @@
-numpy
-pandas
-streamlit
-scikit-learn==1.2.2
-tensorflow==2.16.2
-yahooquery
-gdown
-joblib
-dill
