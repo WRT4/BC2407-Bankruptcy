@@ -82,8 +82,8 @@ def download_from_google_drive(file_id, destination):
 @st.cache_resource
 def download_models():
     # Construct the download URLs
-    url_rf4 = "https://drive.google.com/uc?id=1aOJZZojkBHPKdVDr-sAHOtSfQ-2UUtly"  # Converted to direct link
-    url_voting_clf2 = "https://drive.google.com/uc?id=1sWNi8FrnSI0w3f4MYwvhsCz_h1mpRGvY"  # Converted to direct link
+    url_rf4 = "https://drive.usercontent.google.com/download?id=1aOJZZojkBHPKdVDr-sAHOtSfQ-2UUtly&authuser=0"  # Converted to direct link
+    url_voting_clf2 = "https://drive.usercontent.google.com/download?id=1sWNi8FrnSI0w3f4MYwvhsCz_h1mpRGvY&authuser=0"  # Converted to direct link
     
     # Download the models
     gdown.download(url_rf4, "models/rf4.pkl", quiet=False)
@@ -92,8 +92,8 @@ def download_models():
     file_id_rf4 = "1aOJZZojkBHPKdVDr-sAHOtSfQ-2UUtly"  # Replace with your file's ID
     file_id_voting_clf2 = "1sWNi8FrnSI0w3f4MYwvhsCz_h1mpRGvY"  # Replace with your file's ID
 
-    download_from_google_drive(file_id_rf4, "models/rf4.pkl")
-    download_from_google_drive(file_id_voting_clf2, "models/voting_clf2.pkl")
+    # download_from_google_drive(file_id_rf4, "models/rf4.pkl")
+    # download_from_google_drive(file_id_voting_clf2, "models/voting_clf2.pkl")
 
     #def download_file(url, filename):
         #if not os.path.exists(filename):
