@@ -6,7 +6,7 @@ import numpy as np
 import re
 import gdown
 import os
-# import requests
+import requests
 
 from sklearn.base import BaseEstimator, ClassifierMixin
 from yahooquery import Ticker
@@ -69,14 +69,14 @@ class RandomForestWithThreshold(BaseEstimator, ClassifierMixin):
     def predict_proba(self, X):
         return np.asarray(self.rf_model.predict_proba(X))  # Ensure it's a NumPy array
 
-# def download_from_google_drive(file_id, destination):
-    # URL = f"https://drive.google.com/uc?export=download&id={file_id}"
-    # session = requests.Session()
-    # response = session.get(URL, stream=True)
+def download_from_google_drive(file_id, destination):
+    URL = f"https://drive.google.com/uc?export=download&id={file_id}"
+    session = requests.Session()
+    response = session.get(URL, stream=True)
 
-    # with open(destination, "wb") as file:
-        # for chunk in response.iter_content(chunk_size=128):
-            # file.write(chunk)
+    with open(destination, "wb") as file:
+        for chunk in response.iter_content(chunk_size=128):
+            file.write(chunk)
 
 # Cache data loading and preprocessing
 @st.cache_resource
@@ -89,19 +89,19 @@ def load_models():
     # gdown.download(url_rf4, "rf4.pkl", quiet=False)
     # gdown.download(url_voting_clf2, "voting_clf2.pkl", quiet=False)
     
-    # file_id_rf4 = "1aOJZZojkBHPKdVDr-sAHOtSfQ-2UUtly"  # Replace with your file's ID
-    # file_id_voting_clf2 = "1sWNi8FrnSI0w3f4MYwvhsCz_h1mpRGvY"  # Replace with your file's ID
+    file_id_rf4 = "1aOJZZojkBHPKdVDr-sAHOtSfQ-2UUtly"  # Replace with your file's ID
+    file_id_voting_clf2 = "1sWNi8FrnSI0w3f4MYwvhsCz_h1mpRGvY"  # Replace with your file's ID
 
-    # download_from_google_drive(file_id_rf4, "rf4.pkl")
-    # download_from_google_drive(file_id_voting_clf2, "voting_clf2.pkl")
+    download_from_google_drive(file_id_rf4, "rf4.pkl")
+    download_from_google_drive(file_id_voting_clf2, "voting_clf2.pkl")
 
-    def download_file(url, filename):
-        if not os.path.exists(filename):
-            os.system(f"wget --no-check-certificate '{url}' -O {filename}")
+    #def download_file(url, filename):
+        #if not os.path.exists(filename):
+            #os.system(f"wget --no-check-certificate '{url}' -O {filename}")
 
     # Download the files
-    download_file(url_rf4, "rf4.pkl")
-    download_file(url_voting_clf2, "voting_clf2.pkl")
+    #download_file(url_rf4, "rf4.pkl")
+    #download_file(url_voting_clf2, "voting_clf2.pkl")
 
     # Load the models after downloading
     nn = load_model('smote_nn1.keras')
