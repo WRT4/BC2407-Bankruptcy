@@ -80,7 +80,7 @@ def download_from_google_drive(file_id, destination):
 
 # Cache data loading and preprocessing
 @st.cache_resource
-def load_models():
+def download_models():
     # Construct the download URLs
     url_rf4 = "https://drive.google.com/uc?id=1aOJZZojkBHPKdVDr-sAHOtSfQ-2UUtly"  # Converted to direct link
     url_voting_clf2 = "https://drive.google.com/uc?id=1sWNi8FrnSI0w3f4MYwvhsCz_h1mpRGvY"  # Converted to direct link
@@ -103,12 +103,18 @@ def load_models():
     #download_file(url_rf4, "rf4.pkl")
     #download_file(url_voting_clf2, "voting_clf2.pkl")
 
+
+@st.cache_resource
+def load_models():
+    
+    download_models()
     # Load the models after downloading
     nn = load_model('smote_nn1.keras')
     rf4 = joblib.load('rf4.pkl')
     voting_clf2 = joblib.load('voting_clf2.pkl')
     
     return rf4, nn, voting_clf2
+    
 
 
 rf4,nn,voting_clf2 = load_models()
