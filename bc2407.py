@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 import re
 import gdown
+import os
 # import requests
 
 from sklearn.base import BaseEstimator, ClassifierMixin
@@ -85,14 +86,22 @@ def load_models():
     url_voting_clf2 = "https://drive.google.com/uc?id=1sWNi8FrnSI0w3f4MYwvhsCz_h1mpRGvY"  # Converted to direct link
     
     # Download the models
-    gdown.download(url_rf4, "rf4.pkl", quiet=False)
-    gdown.download(url_voting_clf2, "voting_clf2.pkl", quiet=False)
+    # gdown.download(url_rf4, "rf4.pkl", quiet=False)
+    # gdown.download(url_voting_clf2, "voting_clf2.pkl", quiet=False)
     
     # file_id_rf4 = "1aOJZZojkBHPKdVDr-sAHOtSfQ-2UUtly"  # Replace with your file's ID
     # file_id_voting_clf2 = "1sWNi8FrnSI0w3f4MYwvhsCz_h1mpRGvY"  # Replace with your file's ID
 
     # download_from_google_drive(file_id_rf4, "rf4.pkl")
     # download_from_google_drive(file_id_voting_clf2, "voting_clf2.pkl")
+
+    def download_file(url, filename):
+        if not os.path.exists(filename):
+            os.system(f"wget --no-check-certificate '{url}' -O {filename}")
+
+    # Download the files
+    download_file(url_rf4, "rf4.pkl")
+    download_file(url_voting_clf2, "voting_clf2.pkl")
 
     # Load the models after downloading
     rf4 = joblib.load('rf4.pkl')
