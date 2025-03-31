@@ -104,8 +104,8 @@ def load_models():
     download_file(url_voting_clf2, "voting_clf2.pkl")
 
     # Load the models after downloading
-    rf4 = joblib.load('rf4.pkl')
     nn = load_model('smote_nn1.keras')
+    rf4 = joblib.load('rf4.pkl')
     voting_clf2 = joblib.load('voting_clf2.pkl')
     
     return rf4, nn, voting_clf2
