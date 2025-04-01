@@ -275,7 +275,7 @@ def calc():
 
 
 # Streamlit UI
-option = st.selectbox("Select input option:", ["Stock Symbol", "Annual Financial Statements", "Manually Enter Information"])
+option = st.selectbox("Select input option:", ["Stock Symbol", "Annual Financial Statements"])
 if option == "Stock Symbol":
     input_name = st.text_input(label="Enter Stock Symbol", value=st.session_state.saved_stock)
     st.session_state.saved_stock = input_name
