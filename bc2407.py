@@ -197,7 +197,7 @@ def extract_latest_year_financial_metrics(text):
         'X5': r'Inventory(?:\n|\s)*([\d,]+)',
         'X6': r'Net Income(?:\n|\s)*([\d,]+)',
         'X7': r'Receivables(?:\n|\s)*([\d,]+)',
-        #'X8': r'Market value(?:\n|\s)*([\d,]+)',
+        'X8': r'Market value(?:\n|\s)*([\d,]+)',
         'X9': r'Total Revenue(?:\n|\s)*([\d,]+)',
         'X10': r'Total Assets(?:\n|\s)*([\d,]+)',
         'X11': r'Long Term Debt(?:\n|\s)*([\d,]+)',
