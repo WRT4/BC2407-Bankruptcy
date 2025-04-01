@@ -4,21 +4,23 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import re
-import gdown
-import os
-import requests
-import pickle
+# import gdown
+# import os
+# import requests
+# import pickle
 
 from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.metrics import roc_curve
 from yahooquery import Ticker
-# from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier
 # from sklearn.preprocessing import LabelEncoder
 # from tensorflow.keras.models import Sequential
 # from tensorflow.keras.layers import Dense, Dropout
 # from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.models import load_model
+from imblearn.over_sampling import SMOTE
 import joblib
-# from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split
 from sklearn.ensemble import VotingClassifier
 
 # Function to interpret model results
@@ -70,58 +72,111 @@ class RandomForestWithThreshold(BaseEstimator, ClassifierMixin):
     def predict_proba(self, X):
         return np.asarray(self.rf_model.predict_proba(X))  # Ensure it's a NumPy array
 
-def download_from_google_drive(file_id, destination):
-    URL = f"https://drive.google.com/uc?export=download&id={file_id}"
-    session = requests.Session()
-    response = session.get(URL, stream=True)
+# def download_from_google_drive(file_id, destination):
+#     URL = f"https://drive.google.com/uc?export=download&id={file_id}"
+#     session = requests.Session()
+#     response = session.get(URL, stream=True)
+#
+#     with open(destination, "wb") as file:
+#         for chunk in response.iter_content(chunk_size=128):
+#             file.write(chunk)
 
-    with open(destination, "wb") as file:
-        for chunk in response.iter_content(chunk_size=128):
-            file.write(chunk)
+# # Cache data loading and preprocessing
+# @st.cache_resource
+# def download_models():
+#     # Construct the download URLs
+#     url_rf4 = "https://drive.usercontent.google.com/download?id=1aOJZZojkBHPKdVDr-sAHOtSfQ-2UUtly&authuser=0"  # Converted to direct link
+#     url_voting_clf2 = "https://drive.usercontent.google.com/download?id=1sWNi8FrnSI0w3f4MYwvhsCz_h1mpRGvY&authuser=0"  # Converted to direct link
+#
+#     # Download the models
+#     gdown.download(url_rf4, "models/rf4.pkl", quiet=False)
+#     gdown.download(url_voting_clf2, "models/voting_clf2.pkl", quiet=False)
+#
+#     file_id_rf4 = "1aOJZZojkBHPKdVDr-sAHOtSfQ-2UUtly"  # Replace with your file's ID
+#     file_id_voting_clf2 = "1sWNi8FrnSI0w3f4MYwvhsCz_h1mpRGvY"  # Replace with your file's ID
+#
+#     # download_from_google_drive(file_id_rf4, "models/rf4.pkl")
+#     # download_from_google_drive(file_id_voting_clf2, "models/voting_clf2.pkl")
+#
+#     #def download_file(url, filename):
+#         #if not os.path.exists(filename):
+#             #os.system(f"wget --no-check-certificate '{url}' -O {filename}")
+#
+#     # Download the files
+#     #download_file(url_rf4, "models/rf4.pkl")
+#     #download_file(url_voting_clf2, "models/voting_clf2.pkl")
 
-# Cache data loading and preprocessing
+
+# @st.cache_resource
+# def load_models():
+#
+#     download_models()
+#     # Load the models after downloading
+#     nn = load_model('models/smote_nn1.keras')
+#     rf4 = joblib.load('models/rf4.pkl')
+#     #with open('models/rf4.pkl', 'rb') as f:
+#         #rf4 = pickle.load(f)
+#     voting_clf2 = joblib.load('models/voting_clf2.pkl')
+#     #with open('models/voting_clf2.pkl', 'rb') as f:
+#         #voting_clf2 = pickle.load(f)
+#     return rf4, nn, voting_clf2
+#rf4,nn,voting_clf2 = load_models()
+
+@st.cache_data
+def read_data():
+    # prepare X-data
+    df = pd.read_csv("data/american_bankruptcy.csv")
+    df = df.drop('X16', axis=1)
+    X = df.drop(columns=["status_label", "company_name", "year"])  # Features (all columns except status_label)
+    y = df["status_label"]  # Target column
+
+    # Split the data: 85% train, 15% test with stratified sampling to maintain balance
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.15, random_state=99,
+                                                        stratify=df['status_label'])
+    y_train = y_train.map({'alive': 0, 'failed': 1})
+    y_test = y_test.map({'alive': 0, 'failed': 1})
+    return X_train, X_test, y_train, y_test
+
 @st.cache_resource
-def download_models():
-    # Construct the download URLs
-    url_rf4 = "https://drive.usercontent.google.com/download?id=1aOJZZojkBHPKdVDr-sAHOtSfQ-2UUtly&authuser=0"  # Converted to direct link
-    url_voting_clf2 = "https://drive.usercontent.google.com/download?id=1sWNi8FrnSI0w3f4MYwvhsCz_h1mpRGvY&authuser=0"  # Converted to direct link
-    
-    # Download the models
-    gdown.download(url_rf4, "models/rf4.pkl", quiet=False)
-    gdown.download(url_voting_clf2, "models/voting_clf2.pkl", quiet=False)
-    
-    file_id_rf4 = "1aOJZZojkBHPKdVDr-sAHOtSfQ-2UUtly"  # Replace with your file's ID
-    file_id_voting_clf2 = "1sWNi8FrnSI0w3f4MYwvhsCz_h1mpRGvY"  # Replace with your file's ID
-
-    # download_from_google_drive(file_id_rf4, "models/rf4.pkl")
-    # download_from_google_drive(file_id_voting_clf2, "models/voting_clf2.pkl")
-
-    #def download_file(url, filename):
-        #if not os.path.exists(filename):
-            #os.system(f"wget --no-check-certificate '{url}' -O {filename}")
-
-    # Download the files
-    #download_file(url_rf4, "models/rf4.pkl")
-    #download_file(url_voting_clf2, "models/voting_clf2.pkl")
-
-
-@st.cache_resource
-def load_models():
-    
-    download_models()
-    # Load the models after downloading
+def train_models(X_train, X_test, y_train, y_test):
     nn = load_model('models/smote_nn1.keras')
-    rf4 = joblib.load('models/rf4.pkl')
-    #with open('models/rf4.pkl', 'rb') as f:
-        #rf4 = pickle.load(f)
-    voting_clf2 = joblib.load('models/voting_clf2.pkl')
-    #with open('models/voting_clf2.pkl', 'rb') as f:
-        #voting_clf2 = pickle.load(f)
-    return rf4, nn, voting_clf2
-    
+    smote = SMOTE(random_state=99, sampling_strategy='auto')
+    X_train_SMOTE, y_train_SMOTE = smote.fit_resample(X_train, y_train)
+    rf4 = RandomForestClassifier(
+        n_estimators=500,  # Number of trees
+        random_state=99,
+        oob_score=True,
+        bootstrap=True,  # Enables OOB estimation
+        warm_start=True  # Allows incremental tree addition
+    )
+    rf4.fit(X_train_SMOTE, y_train_SMOTE)
+    y_probs = rf4.predict_proba(X_test)[:, 1]
+    fpr, tpr, thresholds = roc_curve(y_test, y_probs)
+    rf_threshold = thresholds[np.argmax(tpr - fpr)]
+
+    # Create custom Neural Network and Random Forest models with custom thresholds
+    keras_classifier = KerasClassifier(nn, threshold=0.48695409297943115)
+    rf_with_threshold = RandomForestWithThreshold(rf4, threshold=rf_threshold)
+
+    # Create the Voting Classifier with the custom Random Forest model and Neural Network
+    voting_clf2 = VotingClassifier(estimators=[
+        ('rf', rf_with_threshold),
+        ('nn', keras_classifier)
+    ], voting='soft',
+        weights=[0.65, 0.35])  # Use soft voting, higher weightage to random forest since it has better performance
+
+    voting_clf2.fit(X_train, y_train)
+    y_probs = voting_clf2.predict_proba(X_test)[:, 1]
+    fpr, tpr, thresholds = roc_curve(y_test, y_probs)
+    comb_threshold = thresholds[np.argmax(tpr - fpr)]
+
+    return nn,rf4,voting_clf2,rf_threshold,comb_threshold
+
+X_train, X_test, y_train, y_test = read_data()
+nn,rf4,voting_clf2,rf_threshold,comb_threshold = train_models(X_train, X_test, y_train, y_test)
 
 
-rf4,nn,voting_clf2 = load_models()
+
 
 # Handle session state to preserve values
 if 'saved_text1' not in st.session_state:
@@ -201,12 +256,10 @@ def calc():
     calculate = st.button(label="Calculate Bankruptcy Probability")
     if calculate:
         print(st.session_state.x_data.head())
-        y_prob = voting_clf2.predict_proba(st.session_state.x_data)[:, 1]
-        comb_threshold = 0.23284920588731767
-        y_pred = (y_prob >= comb_threshold).astype(int)
+        comb_prob = voting_clf2.predict_proba(st.session_state.x_data)[:, 1]
+        comb_pred = (comb_prob >= comb_threshold).astype(int)
 
         rf_prob = rf4.predict_proba(st.session_state.x_data)[:, 1]
-        rf_threshold = 0.28
         rf_pred = (rf_prob >= rf_threshold).astype(int)
 
         X_nn = st.session_state.x_data.copy()
@@ -218,7 +271,7 @@ def calc():
 
         st.write("Random Forest Prediction: " + resultstring(rf_pred))
         st.write("Neural Network Prediction: " + resultstring(nn_pred))
-        st.write("Combined Prediction: " + resultstring(y_pred))
+        st.write("Combined Prediction: " + resultstring(comb_pred))
 
 
 # Streamlit UI
