@@ -192,22 +192,22 @@ if 'saved_year' not in st.session_state:
 def extract_latest_year_financial_metrics(text):
     metrics = {
         'X1': r'Current Assets(?:\n|\s)*([\d,]+)',
-        'X2': r'Cost of Revenue(?:\n|\s)*([\d,]+)',  # Update to match the correct phrase if needed
-        'X4': r'EBITDA(?:\n|\s)*([\d,]+)',  # Update to match the correct phrase if needed
+        'X2': r'Cost of Revenue(?:\n|\s)*([\d,]+)',
+        'X4': r'EBITDA(?:\n|\s)*([\d,]+)',
         'X5': r'Inventory(?:\n|\s)*([\d,]+)',
-        'X6': r'Net Income(?:\n|\s)*([\d,]+)',  # Update to match the correct phrase if needed
+        'X6': r'Net Income(?:\n|\s)*([\d,]+)',
         'X7': r'Receivables(?:\n|\s)*([\d,]+)',
-        'X8': r'Market value(?:\n|\s)*([\d,]+)',  # Update to match the correct phrase if needed
+        #'X8': r'Market value(?:\n|\s)*([\d,]+)',
         'X9': r'Total Revenue(?:\n|\s)*([\d,]+)',
         'X10': r'Total Assets(?:\n|\s)*([\d,]+)',
         'X11': r'Long Term Debt(?:\n|\s)*([\d,]+)',
-        'X12': r'EBIT(?:\n|\s)*([\d,]+)',  # Update to match the correct phrase if needed
-        'X13': r'Gross Profit(?:\n|\s)*([\d,]+)',  # Update to match the correct phrase if needed
+        'X12': r'EBIT(?:\n|\s)*([\d,]+)',
+        'X13': r'Gross Profit(?:\n|\s)*([\d,]+)',
         'X14': r'Current Liabilities(?:\n|\s)*([\d,]+)',
         'X15': r'Retained Earnings(?:\n|\s)*([\d,]+)',
         # 'X16': r'Total Revenue(?:\n|\s)*([\d,]+)',
         'X17': r'Total Liabilities Net Minority Interest(?:\n|\s)*([\d,]+)',
-        'X18': r'Operating Expense(?:\n|\s)*([\d,]+)',  # Update to match the correct phrase if needed
+        'X18': r'Operating Expense(?:\n|\s)*([\d,]+)',
     }
 
     extracted_data = {}
