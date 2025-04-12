@@ -5,32 +5,19 @@ import pandas as pd
 import numpy as np
 import re
 # import gdown
-# import os
-# import requests
-# import pickle
+import requests
 
 from sklearn.base import BaseEstimator, ClassifierMixin
-from sklearn.metrics import roc_curve
 from yahooquery import Ticker
-from sklearn.ensemble import RandomForestClassifier
+# from sklearn.ensemble import RandomForestClassifier
 # from sklearn.preprocessing import LabelEncoder
 # from tensorflow.keras.models import Sequential
 # from tensorflow.keras.layers import Dense, Dropout
 # from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.models import load_model
-from imblearn.over_sampling import SMOTE
 import joblib
-from sklearn.model_selection import train_test_split
+# from sklearn.model_selection import train_test_split
 from sklearn.ensemble import VotingClassifier
-
-# Function to interpret model results
-def resultstring(arr):
-    if arr[0] == 1:
-        return "High Risk"
-    elif arr[0] == 0:
-        return "Low Risk"
-    else:
-        return "Error"
 
 # Custom wrapper to use the neural network with sklearn's VotingClassifier
 class KerasClassifier(BaseEstimator, ClassifierMixin):
@@ -72,111 +59,41 @@ class RandomForestWithThreshold(BaseEstimator, ClassifierMixin):
     def predict_proba(self, X):
         return np.asarray(self.rf_model.predict_proba(X))  # Ensure it's a NumPy array
 
-# def download_from_google_drive(file_id, destination):
-#     URL = f"https://drive.google.com/uc?export=download&id={file_id}"
-#     session = requests.Session()
-#     response = session.get(URL, stream=True)
-#
-#     with open(destination, "wb") as file:
-#         for chunk in response.iter_content(chunk_size=128):
-#             file.write(chunk)
+def download_from_google_drive(file_id, destination):
+    URL = f"https://drive.google.com/uc?export=download&id={file_id}"
+    session = requests.Session()
+    response = session.get(URL, stream=True)
 
-# # Cache data loading and preprocessing
-# @st.cache_resource
-# def download_models():
-#     # Construct the download URLs
-#     url_rf4 = "https://drive.usercontent.google.com/download?id=1aOJZZojkBHPKdVDr-sAHOtSfQ-2UUtly&authuser=0"  # Converted to direct link
-#     url_voting_clf2 = "https://drive.usercontent.google.com/download?id=1sWNi8FrnSI0w3f4MYwvhsCz_h1mpRGvY&authuser=0"  # Converted to direct link
-#
-#     # Download the models
-#     gdown.download(url_rf4, "models/rf4.pkl", quiet=False)
-#     gdown.download(url_voting_clf2, "models/voting_clf2.pkl", quiet=False)
-#
-#     file_id_rf4 = "1aOJZZojkBHPKdVDr-sAHOtSfQ-2UUtly"  # Replace with your file's ID
-#     file_id_voting_clf2 = "1sWNi8FrnSI0w3f4MYwvhsCz_h1mpRGvY"  # Replace with your file's ID
-#
-#     # download_from_google_drive(file_id_rf4, "models/rf4.pkl")
-#     # download_from_google_drive(file_id_voting_clf2, "models/voting_clf2.pkl")
-#
-#     #def download_file(url, filename):
-#         #if not os.path.exists(filename):
-#             #os.system(f"wget --no-check-certificate '{url}' -O {filename}")
-#
-#     # Download the files
-#     #download_file(url_rf4, "models/rf4.pkl")
-#     #download_file(url_voting_clf2, "models/voting_clf2.pkl")
+    with open(destination, "wb") as file:
+        for chunk in response.iter_content(chunk_size=128):
+            file.write(chunk)
 
-
-# @st.cache_resource
-# def load_models():
-#
-#     download_models()
-#     # Load the models after downloading
-#     nn = load_model('models/smote_nn1.keras')
-#     rf4 = joblib.load('models/rf4.pkl')
-#     #with open('models/rf4.pkl', 'rb') as f:
-#         #rf4 = pickle.load(f)
-#     voting_clf2 = joblib.load('models/voting_clf2.pkl')
-#     #with open('models/voting_clf2.pkl', 'rb') as f:
-#         #voting_clf2 = pickle.load(f)
-#     return rf4, nn, voting_clf2
-#rf4,nn,voting_clf2 = load_models()
-
-@st.cache_data
-def read_data():
-    # prepare X-data
-    df = pd.read_csv("data/american_bankruptcy.csv")
-    df = df.drop('X16', axis=1)
-    X = df.drop(columns=["status_label", "company_name", "year"])  # Features (all columns except status_label)
-    y = df["status_label"]  # Target column
-
-    # Split the data: 85% train, 15% test with stratified sampling to maintain balance
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.15, random_state=99,
-                                                        stratify=df['status_label'])
-    y_train = y_train.map({'alive': 0, 'failed': 1})
-    y_test = y_test.map({'alive': 0, 'failed': 1})
-    return X_train, X_test, y_train, y_test
-
+# Cache data loading and preprocessing
 @st.cache_resource
-def train_models(X_train, X_test, y_train, y_test):
-    nn = load_model('models/smote_nn1.keras')
-    smote = SMOTE(random_state=99, sampling_strategy='auto')
-    X_train_SMOTE, y_train_SMOTE = smote.fit_resample(X_train, y_train)
-    rf4 = RandomForestClassifier(
-        n_estimators=500,  # Number of trees
-        random_state=99,
-        oob_score=True,
-        bootstrap=True,  # Enables OOB estimation
-        warm_start=True  # Allows incremental tree addition
-    )
-    rf4.fit(X_train_SMOTE, y_train_SMOTE)
-    y_probs = rf4.predict_proba(X_test)[:, 1]
-    fpr, tpr, thresholds = roc_curve(y_test, y_probs)
-    rf_threshold = thresholds[np.argmax(tpr - fpr)]
+def load_models():
+    # Construct the download URLs
+    # url_rf4 = "https://drive.google.com/uc?id=1aOJZZojkBHPKdVDr-sAHOtSfQ-2UUtly"  # Converted to direct link
+    # url_voting_clf2 = "https://drive.google.com/uc?id=1sWNi8FrnSI0w3f4MYwvhsCz_h1mpRGvY"  # Converted to direct link
+    
+    # Download the models
+    # gdown.download(url_rf4, "rf4.pkl", quiet=False)
+    # gdown.download(url_voting_clf2, "voting_clf2.pkl", quiet=False)
+    
+    file_id_rf4 = "1aOJZZojkBHPKdVDr-sAHOtSfQ-2UUtly"  # Replace with your file's ID
+    file_id_voting_clf2 = "1sWNi8FrnSI0w3f4MYwvhsCz_h1mpRGvY"  # Replace with your file's ID
 
-    # Create custom Neural Network and Random Forest models with custom thresholds
-    keras_classifier = KerasClassifier(nn, threshold=0.48695409297943115)
-    rf_with_threshold = RandomForestWithThreshold(rf4, threshold=rf_threshold)
+    download_from_google_drive(file_id_rf4, "rf4.pkl")
+    download_from_google_drive(file_id_voting_clf2, "voting_clf2.pkl")
 
-    # Create the Voting Classifier with the custom Random Forest model and Neural Network
-    voting_clf2 = VotingClassifier(estimators=[
-        ('rf', rf_with_threshold),
-        ('nn', keras_classifier)
-    ], voting='soft',
-        weights=[0.65, 0.35])  # Use soft voting, higher weightage to random forest since it has better performance
-
-    voting_clf2.fit(X_train, y_train)
-    y_probs = voting_clf2.predict_proba(X_test)[:, 1]
-    fpr, tpr, thresholds = roc_curve(y_test, y_probs)
-    comb_threshold = thresholds[np.argmax(tpr - fpr)]
-
-    return nn,rf4,voting_clf2,rf_threshold,comb_threshold
-
-X_train, X_test, y_train, y_test = read_data()
-nn,rf4,voting_clf2,rf_threshold,comb_threshold = train_models(X_train, X_test, y_train, y_test)
+    # Load the models after downloading
+    rf4 = joblib.load('rf4.pkl')
+    nn = load_model('smote_nn1.keras')
+    voting_clf2 = joblib.load('voting_clf2.pkl')
+    
+    return rf4, nn, voting_clf2
 
 
-
+rf4,nn,voting_clf2 = load_models()
 
 # Handle session state to preserve values
 if 'saved_text1' not in st.session_state:
@@ -192,22 +109,22 @@ if 'saved_year' not in st.session_state:
 def extract_latest_year_financial_metrics(text):
     metrics = {
         'X1': r'Current Assets(?:\n|\s)*([\d,]+)',
-        'X2': r'Cost of Revenue(?:\n|\s)*([\d,]+)',
-        'X4': r'EBITDA(?:\n|\s)*([\d,]+)',
+        'X2': r'Cost of Revenue(?:\n|\s)*([\d,]+)',  # Update to match the correct phrase if needed
+        'X4': r'EBITDA(?:\n|\s)*([\d,]+)',  # Update to match the correct phrase if needed
         'X5': r'Inventory(?:\n|\s)*([\d,]+)',
-        'X6': r'Net Income(?:\n|\s)*([\d,]+)',
+        'X6': r'Net Income(?:\n|\s)*([\d,]+)',  # Update to match the correct phrase if needed
         'X7': r'Receivables(?:\n|\s)*([\d,]+)',
-        'X8': r'Market value(?:\n|\s)*([\d,]+)',
+        'X8': r'Market value(?:\n|\s)*([\d,]+)',  # Update to match the correct phrase if needed
         'X9': r'Total Revenue(?:\n|\s)*([\d,]+)',
         'X10': r'Total Assets(?:\n|\s)*([\d,]+)',
         'X11': r'Long Term Debt(?:\n|\s)*([\d,]+)',
-        'X12': r'EBIT(?:\n|\s)*([\d,]+)',
-        'X13': r'Gross Profit(?:\n|\s)*([\d,]+)',
+        'X12': r'EBIT(?:\n|\s)*([\d,]+)',  # Update to match the correct phrase if needed
+        'X13': r'Gross Profit(?:\n|\s)*([\d,]+)',  # Update to match the correct phrase if needed
         'X14': r'Current Liabilities(?:\n|\s)*([\d,]+)',
         'X15': r'Retained Earnings(?:\n|\s)*([\d,]+)',
         # 'X16': r'Total Revenue(?:\n|\s)*([\d,]+)',
         'X17': r'Total Liabilities Net Minority Interest(?:\n|\s)*([\d,]+)',
-        'X18': r'Operating Expense(?:\n|\s)*([\d,]+)',
+        'X18': r'Operating Expense(?:\n|\s)*([\d,]+)',  # Update to match the correct phrase if needed
     }
 
     extracted_data = {}
@@ -256,10 +173,12 @@ def calc():
     calculate = st.button(label="Calculate Bankruptcy Probability")
     if calculate:
         print(st.session_state.x_data.head())
-        comb_prob = voting_clf2.predict_proba(st.session_state.x_data)[:, 1]
-        comb_pred = (comb_prob >= comb_threshold).astype(int)
+        y_prob = voting_clf2.predict_proba(st.session_state.x_data)[:, 1]
+        comb_threshold = 0.23284920588731767
+        y_pred = (y_prob >= comb_threshold).astype(int)
 
         rf_prob = rf4.predict_proba(st.session_state.x_data)[:, 1]
+        rf_threshold = 0.28
         rf_pred = (rf_prob >= rf_threshold).astype(int)
 
         X_nn = st.session_state.x_data.copy()
@@ -269,15 +188,15 @@ def calc():
         nn_threshold = 0.48695409297943115
         nn_pred = (nn_prob >= nn_threshold).astype(int)
 
-        st.write("Random Forest Prediction: " + resultstring(rf_pred))
-        st.write("Neural Network Prediction: " + resultstring(nn_pred))
-        st.write("Combined Prediction: " + resultstring(comb_pred))
+        st.write("Random Forest Prediction: " + str(rf_pred))
+        st.write("Neural Network Prediction: " + str(nn_pred))
+        st.write("Combined Prediction: " + str(y_pred))
 
 
 # Streamlit UI
-option = st.selectbox("Select input option:", ["Stock Symbol", "Annual Financial Statements"])
-if option == "Stock Symbol":
-    input_name = st.text_input(label="Enter Stock Symbol", value=st.session_state.saved_stock)
+option = st.selectbox("Select input option:", ["Stock Name", "Annual Financial Statements", "Manually Enter Information"])
+if option == "Stock Name":
+    input_name = st.text_input(label="Enter stock name", value=st.session_state.saved_stock)
     st.session_state.saved_stock = input_name
     company = None
     if input_name:
@@ -338,7 +257,11 @@ if option == "Stock Symbol":
             cols = list(df.columns)[:-2]
             # order = ["year"] + cols[0:2] + ['X3'] + cols[2:6] + ['X8'] + cols[6:]
             order = cols[0:2] + ['X3'] + cols[2:6] + ['X8'] + cols[6:]
-            st.session_state.x_data = df[order]
+            df = df[order]
+            for col in order:
+                if pd.isna(df.iloc[0][col]):
+                    df.iat[0, df.columns.get_loc(col)] = 0
+            st.session_state.x_data = df
             # Always display the extracted data if available
             if st.session_state.x_data is not None:
                 st.write(st.session_state.x_data)
@@ -375,6 +298,9 @@ elif option == "Annual Financial Statements":
             # order = ["year"] + cols[0:2] + ['X3'] + cols[2:]
             order = cols[0:2] + ['X3'] + cols[2:]
             df = df[order]
+            for col in order:
+                if pd.isna(df.iloc[0][col]):
+                    df.iat[0, df.columns.get_loc(col)] = 0
             st.session_state.x_data = df
         # Always display the extracted data if available
         if st.session_state.x_data is not None:
